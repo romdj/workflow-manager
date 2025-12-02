@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    // Language and environment
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+
+    // Strict type-checking
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Module resolution
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    // Emit
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "importHelpers": true,
+
+    // Advanced
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // Paths
+    "baseUrl": ".",
+    "paths": {
+      "@workflow-manager/workflow-engine": ["./libs/workflow-engine/src"],
+      "@workflow-manager/database": ["./libs/database/src"],
+      "@workflow-manager/shared-types": ["./libs/shared/types/src"],
+      "@workflow-manager/validation": ["./libs/shared/validation/src"],
+      "@workflow-manager/utils": ["./libs/shared/utils/src"],
+      "@workflow-manager/ui": ["./libs/ui/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build", ".svelte-kit", "coverage"]
+}
