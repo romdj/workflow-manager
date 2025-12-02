@@ -195,8 +195,8 @@ graph TB
     end
 
     subgraph "MongoDB - Flexible State & Events"
-        MG1[(workflow_instances<br/>{state, stepStates, ...})]
-        MG2[(workflow_events<br/>{eventType, stepId, ...})]
+        MG1[(workflow_instances<br/>state, stepStates, ...)]
+        MG2[(workflow_events<br/>eventType, stepId, ...)]
     end
 
     subgraph "API Layer"
