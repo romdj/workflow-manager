@@ -1,0 +1,40 @@
+{
+  "name": "@workflow-manager/database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Database clients and repositories for PostgreSQL and MongoDB",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist coverage",
+    "migrate": "node dist/migrations/run.js",
+    "seed": "node dist/seeds/run.js"
+  },
+  "dependencies": {
+    "@workflow-manager/shared-types": "workspace:*",
+    "mongodb": "^6.10.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/pg": "^8.11.10",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

@@ -1,0 +1,20 @@
+packages:
+  # Deployable applications
+  - 'apps/*'
+
+  # Core infrastructure libraries
+  - 'libs/workflow-engine'
+  - 'libs/database'
+  - 'libs/shared/*'
+  - 'libs/ui'
+
+  # Business capability modules
+  - 'modules/workflows'
+  - 'modules/market-roles/*'
+  - 'modules/integrations/*'
+
+  # Optional/custom functionality
+  - 'extensions/*'
+
+  # Development utilities
+  - 'tools/*'
