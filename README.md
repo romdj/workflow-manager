@@ -334,6 +334,194 @@ graph TB
     DSO --> WE
 ```
 
+## 📊 Detailed Component Interaction Sequences
+
+### Sequence 1: Contract Onboarding - Full Flow
+
+```mermaid
+sequenceDiagram
+    participant MO as Market Ops
+    participant UI as Admin UI
+    participant API as GraphQL API
+    participant Engine as Workflow Engine
+    participant PG as PostgreSQL
+    participant MG as MongoDB
+
+    Note over MO,MG: Creating BRP Contract Onboarding Workflow
+
+    MO->>UI: Select "Create Workflow"
+    UI->>API: mutation createWorkflow(tenantId, marketRole: BRP, templateId)
+    API->>PG: Verify tenant exists
+    PG-->>API: Tenant: Engie Belgium
+    API->>PG: Load workflow template
+    PG-->>API: BRP Onboarding Template
+
+    API->>Engine: create(tenantId, marketRole, template)
+    Engine->>MG: Insert workflow_instance
+    Note over MG: {<br/>  tenantId: "engie-id",<br/>  marketRole: "BRP",<br/>  status: "draft",<br/>  state: { stepStates: {} }<br/>}
+    MG-->>Engine: workflowId
+
+    Engine->>MG: Append event: WORKFLOW_CREATED
+    Engine->>PG: Insert workflow_instances_index
+    Note over PG: {<br/>  id, tenant_id,<br/>  mongo_id, status: "draft"<br/>}
+
+    Engine-->>API: Workflow created
+    API-->>UI: workflowId, status
+    UI-->>MO: Show workflow editor
+
+    Note over MO,MG: Executing Steps
+
+    MO->>UI: Fill company info form
+    UI->>API: mutation executeStep(workflowId, "company-info", data)
+    API->>Engine: executeStep()
+    Engine->>MG: Load workflow state
+    Engine->>Engine: Validate: company name, VAT number
+    Engine->>MG: Update state.stepStates["company-info"]
+    Engine->>MG: Append event: STEP_COMPLETED
+    Engine->>PG: Update index: current_step, updated_at
+    Engine-->>API: Success
+    API-->>UI: Step completed
+    UI-->>MO: Show next step
+
+    MO->>UI: Fill portfolio details
+    UI->>API: mutation executeStep(workflowId, "portfolio", data)
+    Note over Engine,MG: Same pattern: validate, update MG state, log event, update PG index
+
+    MO->>UI: Submit for approval
+    UI->>API: mutation submitWorkflow(workflowId)
+    API->>Engine: validate() then submit()
+    Engine->>MG: Load all step states
+    Engine->>Engine: Run validators on all steps
+    Engine->>MG: Update status: "submitted"
+    Engine->>MG: Append event: WORKFLOW_SUBMITTED
+    Engine->>PG: Update index: status = "submitted"
+    Engine-->>API: Submitted successfully
+    API-->>UI: Workflow submitted
+    UI-->>MO: Success notification
+```
+
+### Sequence 2: Data Storage Pattern - PostgreSQL vs MongoDB
+
+```mermaid
+sequenceDiagram
+    participant API
+    participant PG as PostgreSQL<br/>(Structured)
+    participant MG as MongoDB<br/>(Flexible)
+
+    Note over API,MG: Storing Tenant & Market Role Data
+
+    API->>PG: INSERT INTO tenants
+    Note over PG: {<br/>  id: uuid,<br/>  company_name: "Engie Belgium",<br/>  vat_number: "BE0403170701",<br/>  status: "active"<br/>}
+
+    API->>PG: INSERT INTO tenant_market_roles
+    Note over PG: {<br/>  tenant_id: uuid,<br/>  role: "BRP",<br/>  status: "onboarding",<br/>  contract_reference: "BRP-2025-001"<br/>}
+
+    Note over API,MG: Storing Workflow Instance & State
+
+    API->>PG: INSERT INTO workflow_instances_index
+    Note over PG: Lightweight index for queries:<br/>{<br/>  id, tenant_id, mongo_id,<br/>  status, current_step,<br/>  created_at, updated_at<br/>}
+
+    API->>MG: db.workflow_instances.insertOne()
+    Note over MG: Full workflow state:<br/>{<br/>  _id: ObjectId,<br/>  tenantId: "engie-id",<br/>  marketRole: "BRP",<br/>  status: "in_progress",<br/>  currentStepId: "portfolio",<br/>  state: {<br/>    stepStates: {<br/>      "company-info": {<br/>        status: "completed",<br/>        data: {<br/>          companyName: "Engie",<br/>          vatNumber: "BE...",<br/>          address: {...}<br/>        },<br/>        completedAt: ISODate()<br/>      },<br/>      "portfolio": {<br/>        status: "in_progress",<br/>        data: {<br/>          accessPoints: [...],<br/>          deliveryPoints: [...]<br/>        }<br/>      }<br/>    },<br/>    metadata: {...}<br/>  }<br/>}
+
+    Note over API,MG: Storing Events for Audit
+
+    API->>MG: db.workflow_events.insertOne()
+    Note over MG: Append-only event log:<br/>{<br/>  workflowInstanceId: ObjectId,<br/>  eventType: "STEP_COMPLETED",<br/>  stepId: "company-info",<br/>  eventData: {<br/>    previousState: {...},<br/>    newState: {...}<br/>  },<br/>  performedBy: "user-id",<br/>  occurredAt: ISODate()<br/>}
+
+    Note over API,MG: Why This Split?
+
+    Note over PG: PostgreSQL stores:<br/>• Tenants & users (relational)<br/>• Templates (versioned)<br/>• Workflow index (fast queries)<br/>• RLS enforces tenant isolation
+
+    Note over MG: MongoDB stores:<br/>• Workflow state (nested, flexible)<br/>• Events (append-only, audit)<br/>• No schema changes needed<br/>• Fast writes for state updates
+```
+
+### Sequence 3: Query Pattern - Cross-Database Operations
+
+```mermaid
+sequenceDiagram
+    participant User as Market Ops
+    participant API
+    participant PG as PostgreSQL
+    participant MG as MongoDB
+
+    Note over User,MG: Query: List all workflows for a tenant
+
+    User->>API: query workflows(filter: {tenantId, status: "in_progress"})
+    API->>API: Extract tenantId from JWT
+    API->>PG: SET app.current_tenant = tenantId
+
+    API->>PG: SELECT FROM workflow_instances_index<br/>WHERE tenant_id = $1 AND status = $2
+    Note over PG: RLS policy automatically filters<br/>Fast query on indexed fields
+    PG-->>API: [workflow_id_1, workflow_id_2, ...]
+
+    API->>MG: db.workflow_instances.find({<br/>  _id: {$in: [id1, id2, ...]}})
+    Note over MG: Batch load full workflow states
+    MG-->>API: [full_workflow_1, full_workflow_2, ...]
+
+    API->>API: Merge: PG metadata + MG state
+    API-->>User: [{id, tenant, status, currentStep, state}, ...]
+
+    Note over User,MG: Query: Get workflow with full history
+
+    User->>API: query workflow(id) { id, tenant, state, events }
+    API->>PG: Verify access (RLS)
+    API->>MG: db.workflow_instances.findOne({_id})
+    MG-->>API: Workflow state
+    API->>MG: db.workflow_events.find({workflowInstanceId})<br/>.sort({occurredAt: 1})
+    MG-->>API: [event1, event2, ..., eventN]
+
+    API->>API: Enrich with tenant data from PG
+    API-->>User: Complete workflow + audit trail
+```
+
+### Sequence 4: Rollback Operation - Event Sourcing
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant API
+    participant Engine as Workflow Engine
+    participant ES as Event Store
+    participant Saga as Saga Coordinator
+    participant MG as MongoDB
+    participant PG as PostgreSQL
+
+    User->>API: mutation rollbackWorkflow(workflowId, toStepId: "company-info")
+    API->>Engine: rollback(workflowId, toStepId, context)
+
+    Engine->>MG: Load current workflow state
+    MG-->>Engine: Current state (at "approval" step)
+
+    Engine->>ES: getEvents(workflowId)
+    ES->>MG: db.workflow_events.find({workflowInstanceId})<br/>.sort({occurredAt: 1})
+    MG-->>ES: [WORKFLOW_CREATED, STEP_COMPLETED: company-info,<br/>STEP_COMPLETED: portfolio, STEP_COMPLETED: approval]
+    ES-->>Engine: Event history
+
+    Engine->>Engine: Find target event: STEP_COMPLETED(company-info)
+    Engine->>Engine: Identify steps to compensate:<br/>["approval", "portfolio"]
+
+    Engine->>Saga: compensate(["approval", "portfolio"])
+
+    loop For each step in reverse
+        Saga->>Saga: Get compensation handler for step type
+        Saga->>Saga: Execute compensation logic
+        Note over Saga: e.g., Delete saved data,<br/>Revoke approvals,<br/>Notify stakeholders
+        Saga->>MG: Append event: STEP_COMPENSATED
+    end
+
+    Engine->>ES: rebuildState(workflowId, until: targetEvent.occurredAt)
+    ES->>Engine: State at "company-info" completion
+
+    Engine->>MG: Update workflow_instance<br/>SET state = rebuiltState,<br/>    status = "in_progress",<br/>    currentStepId = "company-info"
+
+    Engine->>MG: Append event: WORKFLOW_ROLLED_BACK
+    Engine->>PG: Update workflow_instances_index<br/>SET current_step = "company-info",<br/>    status = "in_progress"
+
+    Engine-->>API: Rollback complete
+    API-->>User: Workflow rolled back to company-info step
+```
+
 ## 📦 Package Dependency Graph
 
 ```mermaid
