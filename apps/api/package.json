@@ -27,6 +27,8 @@
     "@fastify/helmet": "^12.0.1",
     "@fastify/jwt": "^9.0.1",
     "@fastify/rate-limit": "^10.1.1",
+    "@graphql-tools/graphql-file-loader": "^8.0.22",
+    "@graphql-tools/load": "^8.1.2",
     "dataloader": "^2.2.2",
     "fastify": "^5.1.0",
     "graphql": "^16.9.0",

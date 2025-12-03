@@ -5,7 +5,10 @@ packages:
   # Core infrastructure libraries
   - 'libs/workflow-engine'
   - 'libs/database'
-  - 'libs/shared/*'
+  - 'libs/shared/types'
+  - 'libs/shared/validation'
+  - 'libs/shared/utils'
+  - 'libs/shared/configs'
   - 'libs/ui'
 
   # Business capability modules
