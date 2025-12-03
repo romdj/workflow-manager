@@ -1,9 +1,11 @@
 # ADR-005: Authentication & Authorization
 
 ## Status
+
 Accepted
 
 ## Date
+
 2025-12-02
 
 ## Context
@@ -106,25 +108,25 @@ We will implement a **JWT-based authentication system** with **Role-Based Access
 // JWT Payload
 interface JWTPayload {
   // Standard claims
-  sub: string;           // User ID
-  iss: string;           // Issuer (workflow-manager)
-  aud: string;           // Audience (workflow-manager-api)
-  iat: number;           // Issued at (timestamp)
-  exp: number;           // Expiration (timestamp)
+  sub: string; // User ID
+  iss: string; // Issuer (workflow-manager)
+  aud: string; // Audience (workflow-manager-api)
+  iat: number; // Issued at (timestamp)
+  exp: number; // Expiration (timestamp)
 
   // Custom claims
-  tenantId: string;      // Tenant/Company ID
-  email: string;         // User email
-  name: string;          // User name
-  role: UserRole;        // User role
+  tenantId: string; // Tenant/Company ID
+  email: string; // User email
+  name: string; // User name
+  role: UserRole; // User role
   permissions: string[]; // Explicit permissions
 }
 
 type UserRole =
-  | 'market_ops'         // Market Operations (Elia staff)
-  | 'tenant_admin'       // Tenant administrator
-  | 'tenant_operator'    // Tenant operator
-  | 'tenant_viewer';     // Tenant viewer (read-only)
+  | 'market_ops' // Market Operations (Elia staff)
+  | 'tenant_admin' // Tenant administrator
+  | 'tenant_operator' // Tenant operator
+  | 'tenant_viewer'; // Tenant viewer (read-only)
 ```
 
 ### Database Schema
@@ -255,7 +257,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: this.sanitizeUser(user)
+      user: this.sanitizeUser(user),
     };
   }
 
@@ -279,7 +281,7 @@ export class AuthService {
 
     return {
       accessToken,
-      user: this.sanitizeUser(user)
+      user: this.sanitizeUser(user),
     };
   }
 
@@ -300,7 +302,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       role: user.role,
-      permissions: await this.getUserPermissions(user)
+      permissions: await this.getUserPermissions(user),
     };
 
     return jwt.sign(payload, this.JWT_SECRET, { algorithm: 'HS256' });
@@ -313,7 +315,7 @@ export class AuthService {
     await this.refreshTokenRepository.create({
       userId: user.id,
       tokenHash,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     });
 
     return token;
@@ -343,10 +345,7 @@ export class AuthService {
 import { FastifyRequest, FastifyReply } from 'fastify';
 import jwt from 'jsonwebtoken';
 
-export async function authMiddleware(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
+export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
   // 1. Extract token from Authorization header
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -373,9 +372,8 @@ export async function authMiddleware(
       email: payload.email,
       name: payload.name,
       role: payload.role,
-      permissions: payload.permissions
+      permissions: payload.permissions,
     };
-
   } catch (error) {
     reply.code(401).send({ error: 'Invalid token' });
     return;
@@ -388,10 +386,7 @@ export async function authMiddleware(
 ```typescript
 // apps/api/src/middleware/tenant.middleware.ts
 
-export async function tenantMiddleware(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
+export async function tenantMiddleware(request: FastifyRequest, reply: FastifyReply) {
   if (!request.user) {
     reply.code(401).send({ error: 'Authentication required' });
     return;
@@ -399,10 +394,7 @@ export async function tenantMiddleware(
 
   // Set PostgreSQL session variable for Row-Level Security
   if (request.user.role !== 'market_ops') {
-    await db.query(
-      'SET LOCAL app.current_tenant = $1',
-      [request.user.tenantId]
-    );
+    await db.query('SET LOCAL app.current_tenant = $1', [request.user.tenantId]);
   }
   // Market Ops has access to all tenants, no restriction
 }
@@ -515,16 +507,13 @@ export class AuditService {
       resourceId: event.resourceId,
       details: event.details,
       ipAddress: event.ipAddress,
-      userAgent: event.userAgent
+      userAgent: event.userAgent,
     });
   }
 }
 
 // Middleware to automatically audit GraphQL operations
-export function auditMiddleware(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
+export function auditMiddleware(request: FastifyRequest, reply: FastifyReply) {
   const originalSend = reply.send;
 
   reply.send = function (payload: any) {
@@ -538,10 +527,10 @@ export function auditMiddleware(
         resourceId: extractResourceId(request.body),
         details: {
           query: request.body?.query,
-          variables: request.body?.variables
+          variables: request.body?.variables,
         },
         ipAddress: request.ip,
-        userAgent: request.headers['user-agent']
+        userAgent: request.headers['user-agent'],
       });
     }
 
@@ -628,6 +617,7 @@ export function auditMiddleware(
 ## Future Considerations
 
 ### Identity Federation (Phase 2)
+
 ```typescript
 // Support for external IDPs
 interface FederatedAuth {
@@ -644,6 +634,7 @@ interface FederatedAuth {
 ```
 
 ### MFA Support (Phase 3)
+
 ```typescript
 interface MFAConfig {
   enabled: boolean;
@@ -653,6 +644,7 @@ interface MFAConfig {
 ```
 
 ### Kong Integration (Phase 2)
+
 - Use Kong as API Gateway
 - Delegate auth to Kong
 - JWT validation at gateway level

@@ -53,6 +53,7 @@ workflow-manager/
 ## Key Commands
 
 ### Root Level (Workspace)
+
 ```bash
 pnpm install              # Install all dependencies
 pnpm dev                  # Start all apps in dev mode
@@ -64,6 +65,7 @@ pnpm clean                # Clean all build artifacts
 ```
 
 ### Individual Apps
+
 ```bash
 pnpm --filter @workflow-manager/api dev        # Start API server
 pnpm --filter @workflow-manager/admin-ui dev   # Start admin UI
@@ -71,12 +73,14 @@ pnpm --filter @workflow-manager/worker dev     # Start worker
 ```
 
 ### Database
+
 ```bash
 pnpm db:migrate           # Run PostgreSQL migrations
 pnpm db:seed              # Seed databases with test data
 ```
 
 ### Code Generation
+
 ```bash
 pnpm generate:types       # Generate TypeScript types from GraphQL schema
 ```
@@ -121,9 +125,7 @@ describe('StateMachine', () => {
       const machine = new StateMachine(state, template);
 
       // Act & Assert
-      await expect(
-        machine.transition('invalid-step')
-      ).rejects.toThrow(InvalidTransitionError);
+      await expect(machine.transition('invalid-step')).rejects.toThrow(InvalidTransitionError);
     });
   });
 });
@@ -164,6 +166,7 @@ describe('StateMachine', () => {
 Format: `<type>(<scope>): <subject>`
 
 **Types**:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -173,6 +176,7 @@ Format: `<type>(<scope>): <subject>`
 - `chore`: Maintenance tasks
 
 **Examples**:
+
 ```bash
 feat(workflow-engine): implement pause/resume functionality
 fix(api): resolve tenant isolation bug in workflow query
@@ -202,6 +206,7 @@ refactor(ui): extract common form components
 ### Code Review Guidelines
 
 **Reviewers should check**:
+
 - Tests written first (TDD)
 - All tests passing
 - Code follows style guide
@@ -244,7 +249,7 @@ app.addHook('onRequest', async (request, reply) => {
 const workflowId = await engine.create({
   tenantId,
   templateId: 'brp-onboarding',
-  createdBy: userId
+  createdBy: userId,
 });
 
 // Execute step
@@ -430,6 +435,7 @@ try {
 ## Support
 
 For questions or issues:
+
 1. Check relevant ADR
 2. Review documentation
 3. Search existing issues

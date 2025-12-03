@@ -583,28 +583,28 @@ graph TD
 
 ## 🔧 Technology Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | SvelteKit | Web framework |
-| | TypeScript | Type safety |
-| | TailwindCSS | Styling |
-| | URQL | GraphQL client |
-| | Vitest | Testing |
-| **Backend** | Fastify | HTTP server |
-| | Mercurius | GraphQL server |
-| | TypeScript | Type safety |
-| | DataLoader | N+1 optimization |
-| | Zod | Validation |
-| | Vitest/Jest | Testing |
-| **Databases** | PostgreSQL 16+ | Structured data + RLS |
-| | MongoDB 7+ | Workflow state + events |
-| **Auth** | JWT | Token-based auth |
-| | bcrypt | Password hashing |
-| | RBAC | Role-based access |
-| **DevOps** | pnpm | Package manager |
-| | Turborepo | Monorepo build |
-| | Docker | Containerization |
-| | GitHub Actions | CI/CD |
+| Layer         | Technology     | Purpose                 |
+| ------------- | -------------- | ----------------------- |
+| **Frontend**  | SvelteKit      | Web framework           |
+|               | TypeScript     | Type safety             |
+|               | TailwindCSS    | Styling                 |
+|               | URQL           | GraphQL client          |
+|               | Vitest         | Testing                 |
+| **Backend**   | Fastify        | HTTP server             |
+|               | Mercurius      | GraphQL server          |
+|               | TypeScript     | Type safety             |
+|               | DataLoader     | N+1 optimization        |
+|               | Zod            | Validation              |
+|               | Vitest/Jest    | Testing                 |
+| **Databases** | PostgreSQL 16+ | Structured data + RLS   |
+|               | MongoDB 7+     | Workflow state + events |
+| **Auth**      | JWT            | Token-based auth        |
+|               | bcrypt         | Password hashing        |
+|               | RBAC           | Role-based access       |
+| **DevOps**    | pnpm           | Package manager         |
+|               | Turborepo      | Monorepo build          |
+|               | Docker         | Containerization        |
+|               | GitHub Actions | CI/CD                   |
 
 ## 🚀 Getting Started
 

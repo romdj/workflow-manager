@@ -1,9 +1,11 @@
 # ADR-002: Hybrid Modular Monorepo Structure
 
 ## Status
+
 Accepted
 
 ## Date
+
 2025-12-02
 
 ## Context
@@ -435,26 +437,31 @@ workflow-manager/
 ### 1. Clear Separation of Concerns
 
 **apps/**: Runtime executables
+
 - Each app is independently deployable
 - Apps compose functionality from libs and modules
 - No business logic in apps (orchestration only)
 
 **libs/**: Infrastructure and reusable code
+
 - Framework-agnostic where possible
 - Well-tested, stable APIs
 - No app-specific code
 
 **modules/**: Business capabilities
+
 - Self-contained features
 - Can depend on libs, not on other modules
 - Can be extracted to microservices later
 
 **extensions/**: Optional functionality
+
 - Third-party or custom code
 - Plugin-based architecture
 - No dependencies on other extensions
 
 **tools/**: Development utilities
+
 - Not deployed to production
 - Improve developer experience
 - Shared across all packages
@@ -470,6 +477,7 @@ extensions ──→ modules ──→ libs
 ```
 
 Rules:
+
 - ✅ Apps can depend on libs and modules
 - ✅ Modules can depend on libs only
 - ✅ Extensions can depend on libs and modules
@@ -480,6 +488,7 @@ Rules:
 ### 3. Module Boundaries
 
 Each module in `modules/` must:
+
 - Have a clear, single responsibility
 - Export a well-defined public API
 - Include its own tests
@@ -489,6 +498,7 @@ Each module in `modules/` must:
 ### 4. Market Role Isolation
 
 Each market role package (`modules/market-roles/*/`) contains:
+
 - Workflow templates specific to that role
 - Validators for role-specific data
 - TypeScript types for role domain
@@ -498,6 +508,7 @@ Each market role package (`modules/market-roles/*/`) contains:
 ## Workspace Configuration
 
 ### pnpm-workspace.yaml
+
 ```yaml
 packages:
   - 'apps/*'
@@ -508,18 +519,13 @@ packages:
 ```
 
 ### package.json (root)
+
 ```json
 {
   "name": "workflow-manager",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "libs/**",
-    "modules/**",
-    "extensions/*",
-    "tools/*"
-  ],
+  "workspaces": ["apps/*", "libs/**", "modules/**", "extensions/*", "tools/*"],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -551,6 +557,7 @@ packages:
 ```
 
 ### tsconfig.base.json
+
 ```json
 {
   "compilerOptions": {
@@ -753,35 +760,41 @@ EOF
 ## Migration Strategy
 
 ### Phase 1: Bootstrap (Week 1)
+
 - Create folder structure
 - Set up workspace configuration
 - Configure TypeScript and build tools
 - Create empty package.json files
 
 ### Phase 2: Core Infrastructure (Week 2-3)
+
 - Implement `libs/database` (PG + Mongo)
 - Implement `libs/workflow-engine`
 - Implement `libs/shared/types`
 - Basic tests for each
 
 ### Phase 3: First Module (Week 4-5)
+
 - Implement `modules/workflows/contract-onboarding`
 - Implement `modules/market-roles/brp`
 - Integrate with workflow engine
 - End-to-end test
 
 ### Phase 4: API & UI (Week 6-7)
+
 - Build `apps/api` with GraphQL
 - Build `apps/admin-ui` with SvelteKit
 - Connect frontend to backend
 - Authentication & authorization
 
 ### Phase 5: Additional Roles (Week 8-10)
+
 - Implement remaining market roles (BSP, GU, ACH, etc.)
 - Register with workflow engine
 - Add role-specific validations
 
 ### Phase 6: Integrations & Extensions (Week 11-12)
+
 - Implement Kong integration
 - Create extension examples
 - Document plugin development
@@ -790,21 +803,25 @@ EOF
 ## Alternatives Considered
 
 ### Alternative 1: Apps + Packages (Flat)
+
 - **Pros**: Simpler structure
 - **Cons**: No clear place for market roles, less extensible
 - **Rejected**: Doesn't handle market role diversity well
 
 ### Alternative 2: Feature-Based (DDD)
+
 - **Pros**: Domain-driven, self-contained features
 - **Cons**: More complex, steeper learning curve
 - **Rejected**: Too complex for initial implementation
 
 ### Alternative 3: Layer-Based (Traditional)
+
 - **Pros**: Familiar to many developers
 - **Cons**: Less flexible, monolithic tendency
 - **Rejected**: Not idiomatic for monorepos, harder to extract
 
 ### Alternative 4: Plugin-First (Maximum Extensibility)
+
 - **Pros**: Maximum flexibility
 - **Cons**: Over-engineered, slow initial development
 - **Rejected**: Too complex for current needs

@@ -36,7 +36,9 @@
     "docker:logs": "docker-compose logs -f",
     "docker:clean": "docker-compose down --rmi all -v && docker system prune -f",
     "semantic-release": "semantic-release",
-    "prepare": "husky"
+    "prepare": "husky",
+    "hooks:install": "husky",
+    "hooks:skip": "echo 'Skipping hooks for this operation. Use with caution!'"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",

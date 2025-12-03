@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Running pre-push validation (mirrors CI pipeline)..."
+echo ""
+
+# 1. Format check
+echo "📝 [1/4] Checking code formatting..."
+pnpm format:check || {
+  echo "❌ Format check failed. Run 'pnpm format' to fix."
+  exit 1
+}
+echo "✅ Format check passed"
+echo ""
+
+# 2. Lint
+echo "🔍 [2/4] Running linters..."
+pnpm lint || {
+  echo "❌ Lint failed. Run 'pnpm lint:fix' to auto-fix issues."
+  exit 1
+}
+echo "✅ Lint passed"
+echo ""
+
+# 3. Type check
+echo "🔧 [3/4] Type checking..."
+pnpm type-check || {
+  echo "❌ Type check failed. Fix TypeScript errors before pushing."
+  exit 1
+}
+echo "✅ Type check passed"
+echo ""
+
+# 4. Tests
+echo "🧪 [4/4] Running tests..."
+pnpm test || {
+  echo "❌ Tests failed. Fix failing tests before pushing."
+  exit 1
+}
+echo "✅ Tests passed"
+echo ""
+
+echo "✨ All pre-push checks passed! Safe to push."

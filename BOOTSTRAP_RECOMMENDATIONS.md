@@ -11,11 +11,13 @@ After analyzing three reference projects (`3point-game-nhl-standing`, `OTW.sport
 ## Project Analysis Summary
 
 ### 1. 3point-game-nhl-standing
+
 **Status**: Most mature SvelteKit + GraphQL implementation
 **Stack**: Fastify + Mercurius (GraphQL), SvelteKit, TailwindCSS + DaisyUI, Vitest, npm workspaces
 **Maturity**: Production-ready with comprehensive testing
 
 **Structure**:
+
 ```
 3point-game-nhl-standing/
 ├── frontend/           # SvelteKit app
@@ -25,6 +27,7 @@ After analyzing three reference projects (`3point-game-nhl-standing`, `OTW.sport
 ```
 
 ### 2. OTW.sport
+
 **Status**: Similar to 3point but with mobile app
 **Stack**: Same as 3point + Flutter app
 **Maturity**: Medium - similar architecture to 3point
@@ -32,11 +35,13 @@ After analyzing three reference projects (`3point-game-nhl-standing`, `OTW.sport
 **Structure**: Nearly identical to 3point-game with added `app/` folder for Flutter
 
 ### 3. tempsdarret.studio
+
 **Status**: Most advanced microservices architecture
 **Stack**: Fastify microservices, MongoDB, KafkaJS, SvelteKit, TypeSpec for API design
 **Maturity**: High architectural sophistication
 
 **Structure**:
+
 ```
 tempsdarret.studio/
 ├── frontend/                    # SvelteKit client portal
@@ -67,6 +72,7 @@ tempsdarret.studio/
 **Why**: Modern ESLint 9+ flat config with shared base configurations
 
 **Reusable Pattern**:
+
 ```javascript
 // shared/eslint.config.base.js
 export const baseEslintConfig = js.configs.recommended;
@@ -78,12 +84,14 @@ export const browserGlobals = globals.browser;
 ```
 
 **Recommendation**:
+
 - Copy `shared/eslint.config.base.js` to `libs/shared/configs/`
 - Frontend extends base + adds Svelte plugin
 - Backend extends base + adds Node globals
 - Single source of truth for linting rules
 
 **Files to Copy**:
+
 - ✅ `3point-game-nhl-standing/shared/eslint.config.base.js`
 - ✅ `3point-game-nhl-standing/frontend/eslint.config.js` (adapt for our apps/admin-ui)
 - ✅ `3point-game-nhl-standing/graphql-server/eslint.config.js` (adapt for our apps/api)
@@ -95,16 +103,19 @@ export const browserGlobals = globals.browser;
 **Why**: Excellent coverage configuration with per-directory thresholds
 
 **Key Features**:
+
 - Happy-DOM for Svelte components
 - Coverage thresholds per directory (`utils/` = 90%, `stores/` = 85%)
 - Multiple reporters (text, lcov, html, json-summary, cobertura)
 - Explicit includes/excludes
 
 **Recommendation**:
+
 - Use this exact config for `apps/admin-ui/vitest.config.ts`
 - Create simpler version for backend libs (no Svelte plugin)
 
 **Files to Copy**:
+
 - ✅ `3point-game-nhl-standing/frontend/vitest.config.ts`
 
 ### 3. **Shared Package Pattern** (from tempsdarret)
@@ -114,6 +125,7 @@ export const browserGlobals = globals.browser;
 **Why**: Advanced subpath exports pattern for granular imports
 
 **Pattern**:
+
 ```json
 {
   "exports": {
@@ -127,6 +139,7 @@ export const browserGlobals = globals.browser;
 ```
 
 **Recommendation**:
+
 - Apply to `@workflow-manager/shared-types`, `@workflow-manager/utils`, `@workflow-manager/validation`
 - Allows: `import { z } from '@workflow-manager/validation/schemas'`
 - Instead of: `import { z } from '@workflow-manager/validation'` (imports everything)
@@ -138,6 +151,7 @@ export const browserGlobals = globals.browser;
 **Why**: Much stricter than our current config
 
 **Key Additions**:
+
 ```json
 {
   "noImplicitAny": true,
@@ -148,11 +162,12 @@ export const browserGlobals = globals.browser;
   "noUncheckedSideEffectImports": true,
   "allowUnusedLabels": false,
   "allowUnreachableCode": false,
-  "exactOptionalPropertyTypes": true  // Already in ours
+  "exactOptionalPropertyTypes": true // Already in ours
 }
 ```
 
 **Recommendation**:
+
 - **Merge** these additional flags into our `tsconfig.base.json`
 - Will catch more bugs at compile time
 
@@ -165,6 +180,7 @@ export const browserGlobals = globals.browser;
 **Sources**: All three use identical semantic-release setup
 
 **Dependencies**:
+
 ```json
 {
   "@semantic-release/changelog": "^6.0.3",
@@ -177,6 +193,7 @@ export const browserGlobals = globals.browser;
 ```
 
 **Recommendation**:
+
 - Add to root `package.json` devDependencies
 - Create `.releaserc.json` config
 - Enables automated versioning and changelog generation from conventional commits
@@ -184,6 +201,7 @@ export const browserGlobals = globals.browser;
 ### 6. **Docker Compose Patterns** (from all 3 projects)
 
 **Common Scripts**:
+
 ```json
 {
   "docker:build": "docker-compose build",
@@ -195,12 +213,14 @@ export const browserGlobals = globals.browser;
 ```
 
 **Recommendation**:
+
 - Add to root package.json
 - Create `docker-compose.yml` and `docker-compose.dev.yml`
 
 ### 7. **Utility Scripts** (from 3point-game and OTW)
 
 **Helpful Scripts**:
+
 ```json
 {
   "complete-build": "clear; npm run clean; npm run install:all; npm run build; npm test",
@@ -218,6 +238,7 @@ export const browserGlobals = globals.browser;
 **Source**: `3point-game-nhl-standing/graphql-server/`
 
 **Dependencies**:
+
 ```json
 {
   "fastify": "^5.4.0",
@@ -229,6 +250,7 @@ export const browserGlobals = globals.browser;
 ```
 
 **Recommendation**:
+
 - Use this exact stack for `apps/api`
 - Already matches our ADR-004 decision
 
@@ -245,6 +267,7 @@ export const browserGlobals = globals.browser;
 **Why**: Pre-built Tailwind component library (buttons, modals, forms)
 
 **Recommendation**:
+
 - Consider for `apps/admin-ui` if we want rapid UI development
 - Alternative: Build custom component library in `libs/ui`
 
@@ -257,6 +280,7 @@ export const browserGlobals = globals.browser;
 **Why**: Event-driven microservices communication
 
 **Recommendation**:
+
 - NOT needed for MVP
 - Consider for Phase 2 if we need inter-service events
 - Our MongoDB event store is sufficient for now
@@ -270,6 +294,7 @@ export const browserGlobals = globals.browser;
 **Why**: Design-first API development with code generation
 
 **Recommendation**:
+
 - Interesting for Phase 2
 - Overkill for current stage (we have GraphQL schema)
 - Worth exploring if we add REST endpoints
@@ -279,6 +304,7 @@ export const browserGlobals = globals.browser;
 **Source**: `tempsdarret.studio/services/shoot-service/package.json`
 
 **Dependencies**:
+
 ```json
 {
   "@testcontainers/mongodb": "^10.13.0",
@@ -290,6 +316,7 @@ export const browserGlobals = globals.browser;
 **Why**: Spin up real MongoDB/PostgreSQL for integration tests
 
 **Recommendation**:
+
 - HIGH VALUE for integration testing
 - Add after unit tests are in place
 - Ensures tests run against real databases
@@ -317,6 +344,7 @@ cp ~/testzone/3point-game-nhl-standing/.prettierrc.js \
 ### 2. Package.json Scripts
 
 Add to root `package.json`:
+
 ```json
 {
   "scripts": {
@@ -336,6 +364,7 @@ Add to root `package.json`:
 ### 3. Update Dependencies
 
 Add to root `devDependencies`:
+
 ```json
 {
   "@semantic-release/changelog": "^6.0.3",
@@ -348,6 +377,7 @@ Add to root `devDependencies`:
 ```
 
 Add to `apps/api/`:
+
 ```json
 {
   "@graphql-tools/graphql-file-loader": "^8.0.22",
@@ -356,6 +386,7 @@ Add to `apps/api/`:
 ```
 
 Add to `apps/admin-ui/`:
+
 ```json
 {
   "daisyui": "^4.12.24",
@@ -374,6 +405,7 @@ Add to `apps/admin-ui/`:
 **Finding**: All three projects use **npm workspaces** without Turborepo
 
 **Implications for workflow-manager**:
+
 - We already added Turborepo (which is good - more advanced)
 - Reference projects work fine without it
 - Turborepo gives us caching + task orchestration benefits
@@ -384,6 +416,7 @@ Add to `apps/admin-ui/`:
 **Finding**: All three projects use `"type": "module"` (ESM)
 
 **Implications**:
+
 - Matches our setup ✅
 - No CommonJS compatibility needed
 
@@ -392,6 +425,7 @@ Add to `apps/admin-ui/`:
 **Finding**: All projects have a `shared/` or `packages/shared/` workspace
 
 **Implications**:
+
 - We should create `libs/shared/configs/` for:
   - `eslint.config.base.js`
   - `tsconfig.base.json` (already exists at root)
@@ -401,17 +435,20 @@ Add to `apps/admin-ui/`:
 ### Observation 4: Testing Strategy
 
 **3point-game approach**:
+
 - Vitest for unit + component tests
 - Coverage thresholds per directory
 - Happy-DOM for Svelte
 - Jest for backend (older choice)
 
 **tempsdarret approach**:
+
 - Vitest everywhere (modern)
 - Separate test types: `test:unit`, `test:component`, `test:integration`, `test:contract`
 - Testcontainers for integration tests
 
 **Recommendation**: Follow tempsdarret's test categorization:
+
 ```json
 {
   "test": "vitest run",
@@ -451,17 +488,17 @@ Add to `apps/admin-ui/`:
 
 ## Key Differences: Our Stack vs Reference Projects
 
-| Feature | Reference Projects | workflow-manager | Notes |
-|---------|-------------------|------------------|-------|
-| Monorepo Tool | npm workspaces | **pnpm + Turborepo** | ✅ We're more advanced |
-| Package Manager | npm | **pnpm** | ✅ Better choice |
-| GraphQL Server | Apollo (3point) | **Mercurius** | ✅ Matches 3point updated choice |
-| Frontend | SvelteKit | **SvelteKit** | ✅ Same |
-| Backend Framework | Fastify | **Fastify** | ✅ Same |
-| Testing | Jest + Vitest mix | **Vitest** | ✅ Modern choice |
-| Database | N/A | **PG + MongoDB** | ⚠️ More complex |
-| Event Sourcing | No | **Yes** | ⚠️ More complex |
-| Microservices | tempsdarret only | **Modular monolith** | ℹ️ Simpler than microservices |
+| Feature           | Reference Projects | workflow-manager     | Notes                            |
+| ----------------- | ------------------ | -------------------- | -------------------------------- |
+| Monorepo Tool     | npm workspaces     | **pnpm + Turborepo** | ✅ We're more advanced           |
+| Package Manager   | npm                | **pnpm**             | ✅ Better choice                 |
+| GraphQL Server    | Apollo (3point)    | **Mercurius**        | ✅ Matches 3point updated choice |
+| Frontend          | SvelteKit          | **SvelteKit**        | ✅ Same                          |
+| Backend Framework | Fastify            | **Fastify**          | ✅ Same                          |
+| Testing           | Jest + Vitest mix  | **Vitest**           | ✅ Modern choice                 |
+| Database          | N/A                | **PG + MongoDB**     | ⚠️ More complex                  |
+| Event Sourcing    | No                 | **Yes**              | ⚠️ More complex                  |
+| Microservices     | tempsdarret only   | **Modular monolith** | ℹ️ Simpler than microservices    |
 
 **Summary**: Our architecture is more sophisticated than the reference projects. This is good but means less direct copy-paste.
 
@@ -470,6 +507,7 @@ Add to `apps/admin-ui/`:
 ## Conclusion
 
 **Priority Actions**:
+
 1. Copy ESLint flat config base pattern ← **DO THIS FIRST**
 2. Copy Vitest configuration for frontend ← **DO THIS FIRST**
 3. Update tsconfig.base.json with stricter TypeScript flags ← **DO THIS FIRST**
@@ -478,11 +516,13 @@ Add to `apps/admin-ui/`:
 6. Consider DaisyUI for rapid UI development
 
 **Don't Copy**:
+
 - npm workspaces (we have pnpm + Turborepo)
 - Apollo Server (3point migrated to Mercurius, we already chose Mercurius)
 - Microservices architecture from tempsdarret (our modular monolith is simpler)
 
 **Future Exploration**:
+
 - Testcontainers for integration tests
 - TypeSpec for REST API design (if needed)
 - KafkaJS for event-driven workflows (Phase 2+)

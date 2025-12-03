@@ -5,6 +5,7 @@ Optional and custom functionality.
 ## Purpose
 
 This folder is for:
+
 - Third-party plugins
 - Custom workflow templates
 - Custom step handlers

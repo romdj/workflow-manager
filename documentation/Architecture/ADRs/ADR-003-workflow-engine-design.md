@@ -1,9 +1,11 @@
 # ADR-003: Workflow Engine Design (Hybrid State Machine + Event Sourcing)
 
 ## Status
+
 Accepted
 
 ## Date
+
 2025-12-02
 
 ## Context
@@ -44,6 +46,7 @@ The Workflow Manager requires a robust workflow execution engine that supports:
 ## Decision
 
 We will implement a **Hybrid Workflow Engine** combining:
+
 - **State Machine** for explicit control flow
 - **Event Sourcing** for audit trail and rollback
 - **Saga Pattern** for compensation logic
@@ -114,13 +117,7 @@ export type WorkflowStatus =
   | 'failed'
   | 'rolled_back';
 
-export type StepStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'completed'
-  | 'paused'
-  | 'failed'
-  | 'skipped';
+export type StepStatus = 'pending' | 'in_progress' | 'completed' | 'paused' | 'failed' | 'skipped';
 
 export class StateMachine {
   private state: WorkflowState;
@@ -138,14 +135,9 @@ export class StateMachine {
     return allowedSteps?.includes(toStepId) ?? false;
   }
 
-  async transition(
-    toStepId: string,
-    transitionData?: any
-  ): Promise<TransitionResult> {
+  async transition(toStepId: string, transitionData?: any): Promise<TransitionResult> {
     if (!this.canTransition(toStepId)) {
-      throw new InvalidTransitionError(
-        `Cannot transition from ${this.state.currentStepId} to ${toStepId}`
-      );
+      throw new InvalidTransitionError(`Cannot transition from ${this.state.currentStepId} to ${toStepId}`);
     }
 
     const previousStepId = this.state.currentStepId;
@@ -156,14 +148,14 @@ export class StateMachine {
       stepId: toStepId,
       status: 'in_progress',
       data: transitionData || {},
-      startedAt: new Date()
+      startedAt: new Date(),
     });
 
     return {
       success: true,
       previousStepId,
       currentStepId: toStepId,
-      state: this.state
+      state: this.state,
     };
   }
 
@@ -172,9 +164,7 @@ export class StateMachine {
   }
 
   getCurrentStep(): WorkflowStep {
-    return this.template.steps.find(
-      s => s.id === this.state.currentStepId
-    )!;
+    return this.template.steps.find(s => s.id === this.state.currentStepId)!;
   }
 }
 ```
@@ -218,7 +208,7 @@ export class EventStore {
     const fullEvent: WorkflowEvent = {
       ...event,
       eventId: generateId(),
-      occurredAt: new Date()
+      occurredAt: new Date(),
     };
 
     await this.eventRepository.insert(fullEvent);
@@ -226,28 +216,19 @@ export class EventStore {
     return fullEvent;
   }
 
-  async getEvents(
-    workflowId: string,
-    options?: EventQueryOptions
-  ): Promise<WorkflowEvent[]> {
+  async getEvents(workflowId: string, options?: EventQueryOptions): Promise<WorkflowEvent[]> {
     return this.eventRepository.findByWorkflowId(workflowId, options);
   }
 
-  async getEventsSince(
-    workflowId: string,
-    timestamp: Date
-  ): Promise<WorkflowEvent[]> {
+  async getEventsSince(workflowId: string, timestamp: Date): Promise<WorkflowEvent[]> {
     return this.eventRepository.findByWorkflowId(workflowId, {
-      since: timestamp
+      since: timestamp,
     });
   }
 
-  async rebuildState(
-    workflowId: string,
-    untilTimestamp?: Date
-  ): Promise<WorkflowState> {
+  async rebuildState(workflowId: string, untilTimestamp?: Date): Promise<WorkflowState> {
     const events = await this.getEvents(workflowId, {
-      until: untilTimestamp
+      until: untilTimestamp,
     });
 
     return this.replayEvents(events);
@@ -274,7 +255,7 @@ export class EventStore {
           ...stepState!,
           status: 'completed',
           data: event.eventData.stepData,
-          completedAt: event.occurredAt
+          completedAt: event.occurredAt,
         });
         return state;
 
@@ -307,18 +288,9 @@ export class SagaCoordinator {
     this.compensations.set(stepId, action);
   }
 
-  async compensate(
-    workflowId: string,
-    fromStepId: string,
-    toStepId: string,
-    context: WorkflowContext
-  ): Promise<void> {
+  async compensate(workflowId: string, fromStepId: string, toStepId: string, context: WorkflowContext): Promise<void> {
     // Get steps that need compensation
-    const stepsToCompensate = await this.getStepsToCompensate(
-      workflowId,
-      fromStepId,
-      toStepId
-    );
+    const stepsToCompensate = await this.getStepsToCompensate(workflowId, fromStepId, toStepId);
 
     // Execute compensations in reverse order
     for (const stepId of stepsToCompensate.reverse()) {
@@ -329,7 +301,7 @@ export class SagaCoordinator {
           workflowId,
           stepId,
           tenantId: context.tenantId,
-          userId: context.userId
+          userId: context.userId,
         });
 
         await context.eventStore.append({
@@ -338,17 +310,13 @@ export class SagaCoordinator {
           eventType: 'STEP_COMPENSATED',
           stepId,
           eventData: { compensatedAt: new Date() },
-          performedBy: context.userId
+          performedBy: context.userId,
         });
       }
     }
   }
 
-  private async getStepsToCompensate(
-    workflowId: string,
-    fromStepId: string,
-    toStepId: string
-  ): Promise<string[]> {
+  private async getStepsToCompensate(workflowId: string, fromStepId: string, toStepId: string): Promise<string[]> {
     // Get workflow history and determine steps between from and to
     // Return list of step IDs that need compensation
     return []; // Implementation
@@ -369,12 +337,7 @@ export class WorkflowEngine {
     private workflowRepository: WorkflowRepository
   ) {}
 
-  async executeStep(
-    workflowId: string,
-    stepId: string,
-    input: any,
-    context: WorkflowContext
-  ): Promise<StepResult> {
+  async executeStep(workflowId: string, stepId: string, input: any, context: WorkflowContext): Promise<StepResult> {
     // 1. Load workflow state from events
     const state = await this.loadWorkflowState(workflowId);
 
@@ -399,7 +362,7 @@ export class WorkflowEngine {
         eventType: 'STEP_STARTED',
         stepId,
         eventData: { input },
-        performedBy: context.userId
+        performedBy: context.userId,
       });
 
       const result = await handler.execute(step, input, context);
@@ -416,9 +379,9 @@ export class WorkflowEngine {
           stepId,
           eventData: {
             output: result.data,
-            nextStep: step.next[result.outcome]
+            nextStep: step.next[result.outcome],
           },
-          performedBy: context.userId
+          performedBy: context.userId,
         });
 
         // Persist state
@@ -433,17 +396,14 @@ export class WorkflowEngine {
         eventType: 'STEP_FAILED',
         stepId,
         eventData: { error: error.message },
-        performedBy: context.userId
+        performedBy: context.userId,
       });
 
       throw error;
     }
   }
 
-  async pause(
-    workflowId: string,
-    context: WorkflowContext
-  ): Promise<void> {
+  async pause(workflowId: string, context: WorkflowContext): Promise<void> {
     const state = await this.loadWorkflowState(workflowId);
 
     state.status = 'paused';
@@ -454,16 +414,13 @@ export class WorkflowEngine {
       tenantId: context.tenantId,
       eventType: 'WORKFLOW_PAUSED',
       eventData: { pausedAt: new Date() },
-      performedBy: context.userId
+      performedBy: context.userId,
     });
 
     await this.persistState(workflowId, state);
   }
 
-  async resume(
-    workflowId: string,
-    context: WorkflowContext
-  ): Promise<void> {
+  async resume(workflowId: string, context: WorkflowContext): Promise<void> {
     const state = await this.loadWorkflowState(workflowId);
 
     if (state.status !== 'paused') {
@@ -479,17 +436,13 @@ export class WorkflowEngine {
       tenantId: context.tenantId,
       eventType: 'WORKFLOW_RESUMED',
       eventData: { resumedAt: new Date() },
-      performedBy: context.userId
+      performedBy: context.userId,
     });
 
     await this.persistState(workflowId, state);
   }
 
-  async rollback(
-    workflowId: string,
-    toStepId: string,
-    context: WorkflowContext
-  ): Promise<void> {
+  async rollback(workflowId: string, toStepId: string, context: WorkflowContext): Promise<void> {
     const state = await this.loadWorkflowState(workflowId);
 
     // Validate rollback target
@@ -503,19 +456,11 @@ export class WorkflowEngine {
     }
 
     // Execute compensations
-    await this.sagaCoordinator.compensate(
-      workflowId,
-      state.currentStepId,
-      toStepId,
-      context
-    );
+    await this.sagaCoordinator.compensate(workflowId, state.currentStepId, toStepId, context);
 
     // Rebuild state to target point
     const targetTimestamp = targetStep.completedAt!;
-    const rolledBackState = await this.eventStore.rebuildState(
-      workflowId,
-      targetTimestamp
-    );
+    const rolledBackState = await this.eventStore.rebuildState(workflowId, targetTimestamp);
 
     rolledBackState.status = 'in_progress';
     rolledBackState.currentStepId = toStepId;
@@ -525,16 +470,13 @@ export class WorkflowEngine {
       tenantId: context.tenantId,
       eventType: 'WORKFLOW_ROLLED_BACK',
       eventData: { toStepId, rolledBackAt: new Date() },
-      performedBy: context.userId
+      performedBy: context.userId,
     });
 
     await this.persistState(workflowId, rolledBackState);
   }
 
-  async validate(
-    workflowId: string,
-    context: WorkflowContext
-  ): Promise<ValidationResult> {
+  async validate(workflowId: string, context: WorkflowContext): Promise<ValidationResult> {
     const state = await this.loadWorkflowState(workflowId);
     const template = await this.getTemplate(state.templateId);
 
@@ -554,14 +496,11 @@ export class WorkflowEngine {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
-  async submit(
-    workflowId: string,
-    context: WorkflowContext
-  ): Promise<SubmitResult> {
+  async submit(workflowId: string, context: WorkflowContext): Promise<SubmitResult> {
     // Validate before submit
     const validation = await this.validate(workflowId, context);
     if (!validation.valid) {
@@ -576,7 +515,7 @@ export class WorkflowEngine {
       tenantId: context.tenantId,
       eventType: 'WORKFLOW_SUBMITTED',
       eventData: { submittedAt: new Date() },
-      performedBy: context.userId
+      performedBy: context.userId,
     });
 
     await this.persistState(workflowId, state);
@@ -593,10 +532,7 @@ export class WorkflowEngine {
     return await this.eventStore.rebuildState(workflowId);
   }
 
-  private async persistState(
-    workflowId: string,
-    state: WorkflowState
-  ): Promise<void> {
+  private async persistState(workflowId: string, state: WorkflowState): Promise<void> {
     // Update MongoDB (current state)
     await this.workflowRepository.updateState(workflowId, state);
 
@@ -604,7 +540,7 @@ export class WorkflowEngine {
     await this.workflowRepository.updateIndex(workflowId, {
       status: state.status,
       currentStepId: state.currentStepId,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
   }
 }
@@ -618,20 +554,11 @@ export class WorkflowEngine {
 export interface StepHandler<TConfig = any, TInput = any, TOutput = any> {
   readonly type: string;
 
-  validate(
-    step: WorkflowStep<TConfig>,
-    data: TInput
-  ): Promise<ValidationResult>;
+  validate(step: WorkflowStep<TConfig>, data: TInput): Promise<ValidationResult>;
 
-  execute(
-    step: WorkflowStep<TConfig>,
-    input: TInput,
-    context: WorkflowContext
-  ): Promise<StepResult<TOutput>>;
+  execute(step: WorkflowStep<TConfig>, input: TInput, context: WorkflowContext): Promise<StepResult<TOutput>>;
 
-  compensate?(
-    context: CompensationContext
-  ): Promise<void>;
+  compensate?(context: CompensationContext): Promise<void>;
 }
 
 export interface StepResult<T = any> {
@@ -653,46 +580,35 @@ export class FormStepHandler implements StepHandler {
     } catch (error) {
       return {
         valid: false,
-        errors: error.errors
+        errors: error.errors,
       };
     }
   }
 
-  async execute(
-    step: WorkflowStep,
-    input: any,
-    context: WorkflowContext
-  ): Promise<StepResult> {
+  async execute(step: WorkflowStep, input: any, context: WorkflowContext): Promise<StepResult> {
     // Validate
     const validation = await this.validate(step, input);
     if (!validation.valid) {
       return {
         success: false,
         outcome: 'validation_failed',
-        error: new ValidationError('Form validation failed', validation.errors)
+        error: new ValidationError('Form validation failed', validation.errors),
       };
     }
 
     // Save to database
-    await context.database.saveStepData(
-      context.workflowId,
-      step.id,
-      input
-    );
+    await context.database.saveStepData(context.workflowId, step.id, input);
 
     return {
       success: true,
       outcome: 'default',
-      data: input
+      data: input,
     };
   }
 
   async compensate(context: CompensationContext): Promise<void> {
     // Delete saved form data
-    await context.database.deleteStepData(
-      context.workflowId,
-      context.stepId
-    );
+    await context.database.deleteStepData(context.workflowId, context.stepId);
   }
 }
 ```
@@ -702,6 +618,7 @@ export class FormStepHandler implements StepHandler {
 ### Dual Storage Pattern
 
 **MongoDB (Source of Truth for State)**:
+
 ```typescript
 workflow_instances {
   _id: ObjectId,
@@ -721,6 +638,7 @@ workflow_instances {
 ```
 
 **PostgreSQL (Index for Queries)**:
+
 ```sql
 workflow_instances_index (
   id uuid PRIMARY KEY,
@@ -734,6 +652,7 @@ workflow_instances_index (
 ```
 
 **MongoDB (Event Log)**:
+
 ```typescript
 workflow_events {
   _id: ObjectId,
@@ -829,25 +748,25 @@ workflow_events {
 
 ```typescript
 // Usage in API
-const engine = new WorkflowEngine(
-  eventStore,
-  sagaCoordinator,
-  stepRegistry,
-  workflowRepository
-);
+const engine = new WorkflowEngine(eventStore, sagaCoordinator, stepRegistry, workflowRepository);
 
 // Create workflow
 const workflowId = await engine.create({
   tenantId,
   templateId: 'brp-onboarding',
-  createdBy: userId
+  createdBy: userId,
 });
 
 // Execute first step
-await engine.executeStep(workflowId, 'company-info', {
-  companyName: 'Engie Belgium',
-  vatNumber: 'BE0403170701'
-}, context);
+await engine.executeStep(
+  workflowId,
+  'company-info',
+  {
+    companyName: 'Engie Belgium',
+    vatNumber: 'BE0403170701',
+  },
+  context
+);
 
 // Pause
 await engine.pause(workflowId, context);
@@ -856,9 +775,14 @@ await engine.pause(workflowId, context);
 await engine.resume(workflowId, context);
 
 // Execute next step
-await engine.executeStep(workflowId, 'portfolio-definition', {
-  accessPoints: ['EAN123']
-}, context);
+await engine.executeStep(
+  workflowId,
+  'portfolio-definition',
+  {
+    accessPoints: ['EAN123'],
+  },
+  context
+);
 
 // Validate
 const validation = await engine.validate(workflowId, context);

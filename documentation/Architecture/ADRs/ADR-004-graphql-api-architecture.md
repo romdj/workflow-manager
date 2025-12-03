@@ -1,9 +1,11 @@
 # ADR-004: GraphQL API Architecture
 
 ## Status
+
 Accepted
 
 ## Date
+
 2025-12-02
 
 ## Context
@@ -45,6 +47,7 @@ The Workflow Manager API needs to:
 ## Decision
 
 We will implement a **GraphQL API** using:
+
 - **Fastify** as HTTP server
 - **Mercurius** as GraphQL server
 - **Code-first** approach with TypeScript
@@ -53,14 +56,14 @@ We will implement a **GraphQL API** using:
 
 ### Why GraphQL over REST?
 
-| Requirement | GraphQL | REST |
-|-------------|---------|------|
-| Flexible queries | ✅ Client specifies fields | ❌ Fixed endpoints |
-| Type safety | ✅ Schema + codegen | ⚠️ Manual typing |
-| Avoid over-fetching | ✅ Request only needed | ❌ Return full objects |
-| Avoid under-fetching | ✅ Single request | ❌ Multiple requests |
-| Real-time | ✅ Subscriptions | ❌ Need WebSocket |
-| Nested data | ✅ Natural | ❌ N+1 or denormalization |
+| Requirement          | GraphQL                    | REST                      |
+| -------------------- | -------------------------- | ------------------------- |
+| Flexible queries     | ✅ Client specifies fields | ❌ Fixed endpoints        |
+| Type safety          | ✅ Schema + codegen        | ⚠️ Manual typing          |
+| Avoid over-fetching  | ✅ Request only needed     | ❌ Return full objects    |
+| Avoid under-fetching | ✅ Single request          | ❌ Multiple requests      |
+| Real-time            | ✅ Subscriptions           | ❌ Need WebSocket         |
+| Nested data          | ✅ Natural                 | ❌ N+1 or denormalization |
 
 ### Architecture Overview
 
@@ -349,11 +352,7 @@ import { WorkflowRepository } from '@workflow-manager/database';
 
 export const workflowResolvers = {
   Query: {
-    workflow: async (
-      _parent: any,
-      args: { id: string },
-      context: GraphQLContext
-    ) => {
+    workflow: async (_parent: any, args: { id: string }, context: GraphQLContext) => {
       // Tenant isolation enforced via context
       return await context.loaders.workflow.load(args.id);
     },
@@ -367,23 +366,19 @@ export const workflowResolvers = {
         ...args.filter,
         // Enforce tenant isolation for non-Market Ops users
         ...(context.user.role !== 'market_ops' && {
-          tenantId: context.user.tenantId
-        })
+          tenantId: context.user.tenantId,
+        }),
       };
 
       return await context.repositories.workflow.find(filter, {
         limit: args.limit || 50,
-        offset: args.offset || 0
+        offset: args.offset || 0,
       });
-    }
+    },
   },
 
   Mutation: {
-    createWorkflow: async (
-      _parent: any,
-      args: { input: CreateWorkflowInput },
-      context: GraphQLContext
-    ) => {
+    createWorkflow: async (_parent: any, args: { input: CreateWorkflowInput }, context: GraphQLContext) => {
       // Validate user has access to tenant
       if (context.user.tenantId !== args.input.tenantId && context.user.role !== 'market_ops') {
         throw new ForbiddenError('Cannot create workflow for different tenant');
@@ -393,17 +388,13 @@ export const workflowResolvers = {
         tenantId: args.input.tenantId,
         marketRole: args.input.marketRole,
         templateId: args.input.templateId,
-        createdBy: context.user.id
+        createdBy: context.user.id,
       });
 
       return await context.loaders.workflow.load(workflowId);
     },
 
-    executeStep: async (
-      _parent: any,
-      args: { input: ExecuteStepInput },
-      context: GraphQLContext
-    ) => {
+    executeStep: async (_parent: any, args: { input: ExecuteStepInput }, context: GraphQLContext) => {
       const workflow = await context.loaders.workflow.load(args.input.workflowId);
 
       // Validate access
@@ -418,7 +409,7 @@ export const workflowResolvers = {
           args.input.data,
           {
             tenantId: workflow.tenantId,
-            userId: context.user.id
+            userId: context.user.id,
           }
         );
 
@@ -428,95 +419,66 @@ export const workflowResolvers = {
         return {
           success: result.success,
           workflow: await context.loaders.workflow.load(args.input.workflowId),
-          errors: result.errors || []
+          errors: result.errors || [],
         };
       } catch (error) {
         return {
           success: false,
           workflow,
-          errors: [{ field: 'general', message: error.message }]
+          errors: [{ field: 'general', message: error.message }],
         };
       }
     },
 
-    pauseWorkflow: async (
-      _parent: any,
-      args: { workflowId: string },
-      context: GraphQLContext
-    ) => {
-      await context.services.workflowEngine.pause(
-        args.workflowId,
-        { userId: context.user.id, tenantId: context.user.tenantId }
-      );
+    pauseWorkflow: async (_parent: any, args: { workflowId: string }, context: GraphQLContext) => {
+      await context.services.workflowEngine.pause(args.workflowId, {
+        userId: context.user.id,
+        tenantId: context.user.tenantId,
+      });
 
       context.loaders.workflow.clear(args.workflowId);
       return await context.loaders.workflow.load(args.workflowId);
     },
 
-    resumeWorkflow: async (
-      _parent: any,
-      args: { workflowId: string },
-      context: GraphQLContext
-    ) => {
-      await context.services.workflowEngine.resume(
-        args.workflowId,
-        { userId: context.user.id, tenantId: context.user.tenantId }
-      );
+    resumeWorkflow: async (_parent: any, args: { workflowId: string }, context: GraphQLContext) => {
+      await context.services.workflowEngine.resume(args.workflowId, {
+        userId: context.user.id,
+        tenantId: context.user.tenantId,
+      });
 
       context.loaders.workflow.clear(args.workflowId);
       return await context.loaders.workflow.load(args.workflowId);
     },
 
-    rollbackWorkflow: async (
-      _parent: any,
-      args: { workflowId: string; toStepId: string },
-      context: GraphQLContext
-    ) => {
-      await context.services.workflowEngine.rollback(
-        args.workflowId,
-        args.toStepId,
-        { userId: context.user.id, tenantId: context.user.tenantId }
-      );
+    rollbackWorkflow: async (_parent: any, args: { workflowId: string; toStepId: string }, context: GraphQLContext) => {
+      await context.services.workflowEngine.rollback(args.workflowId, args.toStepId, {
+        userId: context.user.id,
+        tenantId: context.user.tenantId,
+      });
 
       context.loaders.workflow.clear(args.workflowId);
       return await context.loaders.workflow.load(args.workflowId);
-    }
+    },
   },
 
   WorkflowInstance: {
-    tenant: async (
-      parent: WorkflowInstance,
-      _args: any,
-      context: GraphQLContext
-    ) => {
+    tenant: async (parent: WorkflowInstance, _args: any, context: GraphQLContext) => {
       return await context.loaders.tenant.load(parent.tenantId);
     },
 
-    template: async (
-      parent: WorkflowInstance,
-      _args: any,
-      context: GraphQLContext
-    ) => {
+    template: async (parent: WorkflowInstance, _args: any, context: GraphQLContext) => {
       return await context.loaders.template.load(parent.templateId);
     },
 
-    createdBy: async (
-      parent: WorkflowInstance,
-      _args: any,
-      context: GraphQLContext
-    ) => {
+    createdBy: async (parent: WorkflowInstance, _args: any, context: GraphQLContext) => {
       if (!parent.createdBy) return null;
       return await context.loaders.user.load(parent.createdBy);
     },
 
-    events: async (
-      parent: WorkflowInstance,
-      _args: any,
-      context: GraphQLContext
-    ) => {
+    events: async (parent: WorkflowInstance, _args: any, context: GraphQLContext) => {
       return await context.repositories.event.findByWorkflowId(parent.id);
-    }
-  }
+    },
+  },
 };
 ```
 
@@ -570,7 +532,7 @@ export function createContext(request: FastifyRequest): GraphQLContext {
     template: new DataLoader(async (ids: readonly string[]) => {
       const templates = await templateRepository.findByIds(ids);
       return ids.map(id => templates.find(t => t.id === id));
-    })
+    }),
   };
 
   return {
@@ -581,11 +543,11 @@ export function createContext(request: FastifyRequest): GraphQLContext {
       tenant: tenantRepository,
       user: userRepository,
       template: templateRepository,
-      event: eventRepository
+      event: eventRepository,
     },
     services: {
-      workflowEngine: new WorkflowEngine(/* ... */)
-    }
+      workflowEngine: new WorkflowEngine(/* ... */),
+    },
   };
 }
 ```
@@ -629,11 +591,11 @@ app.register(mercurius, {
   resolvers: {
     ...workflowResolvers,
     ...tenantResolvers,
-    ...userResolvers
+    ...userResolvers,
   },
   context: createContext,
   graphiql: process.env.NODE_ENV === 'development',
-  playground: process.env.NODE_ENV === 'development'
+  playground: process.env.NODE_ENV === 'development',
 });
 
 app.listen({ port: 4000 });
@@ -676,9 +638,9 @@ export const client = createClient({
   url: 'http://localhost:4000/graphql',
   fetchOptions: () => ({
     headers: {
-      authorization: `Bearer ${getToken()}`
-    }
-  })
+      authorization: `Bearer ${getToken()}`,
+    },
+  }),
 });
 
 // apps/admin-ui/src/routes/workflows/[id]/+page.ts
@@ -713,7 +675,7 @@ export async function load({ params, parent }) {
   const result = await client.query(WORKFLOW_QUERY, { id: params.id });
 
   return {
-    workflow: result.data?.workflow
+    workflow: result.data?.workflow,
   };
 }
 ```
@@ -799,16 +761,19 @@ export async function load({ params, parent }) {
 ## Alternatives Considered
 
 ### Alternative 1: REST API
+
 - **Pros**: Simple, well-known, less tooling
 - **Cons**: Over-fetching, multiple requests, no type generation
 - **Rejected**: GraphQL better for flexible frontend needs
 
 ### Alternative 2: tRPC
+
 - **Pros**: Type-safe, simpler than GraphQL, no schema
 - **Cons**: TypeScript-only, less flexible than GraphQL
 - **Rejected**: GraphQL more future-proof for non-TS clients
 
 ### Alternative 3: GraphQL + Apollo Server
+
 - **Pros**: Popular, many plugins, good docs
 - **Cons**: Heavier than Mercurius, slower
 - **Rejected**: Mercurius faster and integrates with Fastify

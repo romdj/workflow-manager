@@ -1,9 +1,11 @@
 # ADR-001: Hybrid Database Architecture (PostgreSQL + MongoDB)
 
 ## Status
+
 Accepted
 
 ## Date
+
 2025-12-02
 
 ## Context
@@ -38,7 +40,9 @@ The Workflow Manager system needs to handle multiple concerns:
 We will implement a **hybrid database architecture** using both PostgreSQL and MongoDB:
 
 ### PostgreSQL: Core Domain & Referential Integrity
+
 PostgreSQL will store:
+
 - **Tenants**: Company information, status, legal details
 - **Users**: Authentication, authorization, tenant membership
 - **Tenant Market Roles**: Market role assignments per company
@@ -46,12 +50,15 @@ PostgreSQL will store:
 - **Workflow Metadata**: Searchable workflow instance metadata (id, tenant, status, timestamps)
 
 ### MongoDB: Workflow Runtime & Events
+
 MongoDB will store:
+
 - **Workflow Instances**: Complete runtime state with nested step data
 - **Workflow Events**: Append-only event log for audit and rollback
 - **Step State**: Flexible, market-role-specific step data
 
 ### Data Synchronization Pattern
+
 ```
 PostgreSQL (Source of Truth)          MongoDB (Workflow Runtime)
 ├── tenants                           ├── workflow_instances
@@ -75,6 +82,7 @@ PostgreSQL (Source of Truth)          MongoDB (Workflow Runtime)
 ## Architecture Patterns
 
 ### 1. Write Pattern
+
 ```typescript
 // When creating a workflow instance
 async createWorkflow(tenantId: string, marketRole: MarketRole, templateId: string) {
@@ -148,6 +156,7 @@ async createWorkflow(tenantId: string, marketRole: MarketRole, templateId: strin
 ```
 
 ### 2. Query Pattern
+
 ```typescript
 // Market Ops: Cross-tenant reporting (PostgreSQL)
 async getWorkflowSummaryByTenant(): Promise<TenantWorkflowSummary[]> {
@@ -196,6 +205,7 @@ async searchWorkflows(filters: WorkflowFilters): Promise<WorkflowInstance[]> {
 ```
 
 ### 3. Event Sourcing Pattern
+
 ```typescript
 // Events always written to MongoDB
 async recordWorkflowEvent(event: WorkflowEvent): Promise<void> {
@@ -324,16 +334,19 @@ async rebuildWorkflowState(workflowId: string, untilTimestamp?: Date): Promise<W
 ## Alternatives Considered
 
 ### Alternative 1: PostgreSQL Only (with JSONB)
+
 - **Pros**: Single database, ACID transactions, simpler operations
 - **Cons**: Less flexible for nested workflow state, schema migrations needed
 - **Rejected**: Workflow state evolution would require frequent migrations
 
 ### Alternative 2: MongoDB Only
+
 - **Pros**: Maximum flexibility, natural document model
 - **Cons**: No foreign key constraints, tenant isolation in application code
 - **Rejected**: Loss of relational integrity for critical tenant/user data
 
 ### Alternative 3: Event Store (EventStoreDB) + Read Database
+
 - **Pros**: Purpose-built for event sourcing, excellent audit trail
 - **Cons**: Additional technology, less mature ecosystem
 - **Rejected**: Too specialized, team unfamiliarity
@@ -341,21 +354,25 @@ async rebuildWorkflowState(workflowId: string, untilTimestamp?: Date): Promise<W
 ## Implementation Plan
 
 ### Phase 1: Core Schema (Week 1-2)
+
 - Set up PostgreSQL schema (tenants, users, workflow_templates)
 - Set up MongoDB collections (workflow_instances, workflow_events)
 - Implement connection management and health checks
 
 ### Phase 2: Basic CRUD (Week 3-4)
+
 - Implement create/read workflows with both databases
 - Build synchronization layer
 - Add basic event sourcing
 
 ### Phase 3: Advanced Features (Week 5-6)
+
 - Implement pause/resume/rollback using events
 - Add cross-database queries
 - Build reconciliation jobs
 
 ### Phase 4: Production Readiness (Week 7-8)
+
 - Monitoring and alerting
 - Backup and restore procedures
 - Performance optimization
