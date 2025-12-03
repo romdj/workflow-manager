@@ -7,4 +7,13 @@ module.exports = {
   quoteProps: 'as-needed',
   trailingComma: 'es5',
   arrowParens: 'avoid',
+  plugins: ['prettier-plugin-svelte'],
+  overrides: [
+    {
+      files: '*.svelte',
+      options: {
+        parser: 'svelte',
+      },
+    },
+  ],
 };
