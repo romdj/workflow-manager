@@ -29,14 +29,13 @@ echo "⏭️  Skipping type check (no source files yet)"
 echo "✅ Type check passed (skipped)"
 echo ""
 
-# 4. Tests (skip for now - no tests yet)
+# 4. Tests
 echo "🧪 [4/4] Running tests..."
-echo "⏭️  Skipping tests (no test files yet)"
-# pnpm test || {
-#   echo "❌ Tests failed. Fix failing tests before pushing."
-#   exit 1
-# }
-echo "✅ Tests passed (skipped)"
+pnpm test || {
+  echo "❌ Tests failed. Fix failing tests before pushing."
+  exit 1
+}
+echo "✅ Tests passed"
 echo ""
 
 echo "✨ All pre-push checks passed! Safe to push."
