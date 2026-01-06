@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WorkflowManager.Api/WorkflowManager.Api.csproj" />
+    <Project Path="src/WorkflowManager.Application/WorkflowManager.Application.csproj" />
+    <Project Path="src/WorkflowManager.Core/WorkflowManager.Core.csproj" />
+    <Project Path="src/WorkflowManager.Infrastructure/WorkflowManager.Infrastructure.csproj" />
+    <Project Path="src/WorkflowManager.Workflows/WorkflowManager.Workflows.csproj" />
+  </Folder>
+</Solution>
