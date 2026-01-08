@@ -41,6 +41,11 @@ public enum MarketRole
     DSO,
 
     /// <summary>
+    /// Transmission System Operator - Operates transmission grid (e.g., Elia)
+    /// </summary>
+    TSO,
+
+    /// <summary>
     /// Supplier Agent - Acts on behalf of supplier
     /// </summary>
     SA,
