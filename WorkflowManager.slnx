@@ -6,4 +6,10 @@
     <Project Path="src/WorkflowManager.Infrastructure/WorkflowManager.Infrastructure.csproj" />
     <Project Path="src/WorkflowManager.Workflows/WorkflowManager.Workflows.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WorkflowManager.Api.Tests/WorkflowManager.Api.Tests.csproj" />
+    <Project Path="tests/WorkflowManager.Application.Tests/WorkflowManager.Application.Tests.csproj" />
+    <Project Path="tests/WorkflowManager.Core.Tests/WorkflowManager.Core.Tests.csproj" />
+    <Project Path="tests/WorkflowManager.Infrastructure.Tests/WorkflowManager.Infrastructure.Tests.csproj" />
+  </Folder>
 </Solution>

@@ -29,6 +29,8 @@ public sealed class FormField
     public string Type { get; init; } = "string"; // string, number, date, select, file, etc.
     public bool Required { get; init; }
     public string? Pattern { get; init; } // Regex pattern for validation
+    public string? ErrorMessage { get; init; } // Custom error message for validation
+    public string? Placeholder { get; init; } // Placeholder text for the input
     public int? MinLength { get; init; }
     public int? MaxLength { get; init; }
     public int? MinItems { get; init; } // For arrays

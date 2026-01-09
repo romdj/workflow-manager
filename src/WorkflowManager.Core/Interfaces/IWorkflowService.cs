@@ -99,8 +99,8 @@ public interface IWorkflowService
     Task RejectWorkflowAsync(
         Guid workflowInstanceId,
         string reason,
-        string? returnToStepId = null,
         ITenantContext context,
+        string? returnToStepId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
