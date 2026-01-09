@@ -48,7 +48,7 @@ jobs:
         if: success()
         run: |
           dotnet tool install -g dotnet-reportgenerator-globaltool
-          reportgenerator -reports:./coverage/**/coverage.cobertura.xml -targetdir:./coverage-report -reporttypes:Html;Cobertura;TextSummary
+          reportgenerator "-reports:./coverage/**/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html;Cobertura;TextSummary"
 
       - name: Display coverage summary
         if: success()
@@ -61,6 +61,7 @@ jobs:
           files: ./coverage-report/Cobertura.xml
           flags: dotnet
           name: dotnet-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check code formatting
         run: dotnet format --verify-no-changes --no-restore
